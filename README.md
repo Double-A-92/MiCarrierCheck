@@ -4,6 +4,12 @@ A utility tool to identify carrier customization on Xiaomi devices.
 
 Xiaomi phones often include hidden carrier-specific software (COTA) that controls things like pre-installed apps and network settings. This app reads internal system properties to show you exactly which carrier profile your device is running.
 
+<p align="center">
+  <a href="https://github.com/Double-A-92/MiCarrierCheck/releases/latest/download/app-release.apk">
+    <img src="https://img.shields.io/badge/Download%20APK-Latest%20Release-brightgreen?style=for-the-badge" alt="Download APK">
+  </a>
+</p>
+
 ## Key Features
 
 - **Identify Active Carrier**: See if your phone is using a specific profile from AT&T, Vodafone, Orange, etc.
