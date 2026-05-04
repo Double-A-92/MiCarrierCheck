@@ -10,6 +10,10 @@ Xiaomi phones often include hidden carrier-specific software (COTA) that control
 - **Lock Check**: Instantly see if your device is under a COTA (Carrier Over-the-Air) lock.
 - **Property Viewer**: Access the raw values of MIUI system properties for troubleshooting.
 
+<p align="center">
+  <img src="screenshots/telekom-lock.jpg" alt="Locked Device" height="500">
+</p>
+
 ## How it Works
 
 The app checks the following MIUI system properties:
