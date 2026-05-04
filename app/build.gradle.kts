@@ -20,6 +20,28 @@ android {
         }
     }
 
+    // --- Conditional signing config (only used when environment variables exist) ---
+    signingConfigs {
+        val keystorePath = System.getenv("KEYSTORE_FILE_PATH")
+        if (keystorePath != null) {
+            create("ciRelease") {
+                storeFile = file(keystorePath)
+                storePassword = System.getenv("KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("KEY_ALIAS")
+                keyPassword = System.getenv("KEY_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            // Use the CI signing config if available, otherwise leave unsigned
+            signingConfigs.findByName("ciRelease")?.let {
+                signingConfig = it
+            }
+        }
+    }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
@@ -49,7 +71,7 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.7.0")
     implementation("io.coil-kt:coil-svg:2.7.0")
     implementation("com.materialkolor:material-kolor:4.1.1")
-    
+
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
