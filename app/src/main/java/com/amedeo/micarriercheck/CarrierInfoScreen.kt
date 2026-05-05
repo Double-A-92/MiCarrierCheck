@@ -16,6 +16,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.KeyboardArrowDown
 import androidx.compose.material.icons.rounded.Lock
+import androidx.compose.material.icons.rounded.LockOpen
+import androidx.compose.material.icons.rounded.QuestionMark
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -53,11 +55,11 @@ private fun rememberSvgImageLoader(): ImageLoader {
 }
 
 // All states the debug button cycles through:
-// index 0 = Xiaomi (unlocked), indices 1..N = each known carrier (locked).
 private val DEBUG_CARRIERS: List<DetectionResult> = buildList {
-    add(DetectionResult(isCarrierLocked = false, carrier = XIAOMI_DEFAULT, rawProperties = emptyMap()))
+    add(DetectionResult(lockStatus = LockStatus.UNKNOWN, carrier = XIAOMI_DEFAULT, rawProperties = emptyMap()))
+    add(DetectionResult(lockStatus = LockStatus.UNLOCKED, carrier = XIAOMI_DEFAULT, rawProperties = emptyMap()))
     CARRIER_REGISTRY.values.forEach { carrier ->
-        add(DetectionResult(isCarrierLocked = true, carrier = carrier, rawProperties = emptyMap()))
+        add(DetectionResult(lockStatus = LockStatus.LOCKED, carrier = carrier, rawProperties = emptyMap()))
     }
 }
 
@@ -70,7 +72,12 @@ fun CarrierApp(realResult: DetectionResult) {
     var debugIndex by remember { mutableIntStateOf(-1) }  // -1 = use real result
     val result = if (BuildConfig.DEBUG && debugIndex >= 0) DEBUG_CARRIERS[debugIndex] else realResult
 
-    val targetColor = if (result.isCarrierLocked) result.carrier.brandColor else XIAOMI_DEFAULT.brandColor
+    val targetColor = when (result.lockStatus) {
+        LockStatus.LOCKED -> result.carrier.brandColor
+        LockStatus.UNLOCKED -> XIAOMI_DEFAULT.brandColor
+        LockStatus.UNKNOWN -> Color.Gray
+    }
+    
     val primaryColor by animateColorAsState(targetValue = targetColor, animationSpec = tween(400), label = "primary_color")
     val colorScheme = dynamicColorScheme(
         seedColor = primaryColor,
@@ -118,7 +125,7 @@ fun CarrierInfoScreen(result: DetectionResult, onDebugCycle: (() -> Unit)? = nul
                 modifier = Modifier.align(Alignment.End)
             ) {
                 Text(
-                    text = "⟳  ${result.carrier.displayName}",
+                    text = "⟳  ${result.lockStatus} / ${result.carrier.displayName}",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -136,14 +143,18 @@ fun CarrierInfoScreen(result: DetectionResult, onDebugCycle: (() -> Unit)? = nul
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             CarrierLogoBadge(
-                carrier = if (result.isCarrierLocked) result.carrier else XIAOMI_DEFAULT,
+                result = result,
                 imageLoader = imageLoader
             )
 
             Spacer(modifier = Modifier.height(32.dp))
 
             Text(
-                text = if (result.isCarrierLocked) "Carrier Locked" else "Unlocked",
+                text = when (result.lockStatus) {
+                    LockStatus.LOCKED -> "Carrier Locked"
+                    LockStatus.UNLOCKED -> "Unlocked"
+                    LockStatus.UNKNOWN -> "Unknown Status"
+                },
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.ExtraBold,
                 color = MaterialTheme.colorScheme.onBackground
@@ -152,10 +163,11 @@ fun CarrierInfoScreen(result: DetectionResult, onDebugCycle: (() -> Unit)? = nul
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = if (result.isCarrierLocked)
-                    "OTA Updates controlled by ${result.carrier.displayName}"
-                else
-                    "Standard MIUI / HyperOS",
+                text = when (result.lockStatus) {
+                    LockStatus.LOCKED -> "OTA Updates controlled by ${result.carrier.displayName}"
+                    LockStatus.UNLOCKED -> "Standard MIUI / HyperOS"
+                    LockStatus.UNKNOWN -> "Unable to verify. This might not be a Xiaomi device or a supported ROM."
+                },
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                 textAlign = TextAlign.Center
@@ -179,9 +191,10 @@ fun CarrierInfoScreen(result: DetectionResult, onDebugCycle: (() -> Unit)? = nul
 // coloured border. Falls back to a large initial letter or a lock icon.
 // ---------------------------------------------------------------------------
 @Composable
-private fun CarrierLogoBadge(carrier: Carrier, imageLoader: ImageLoader) {
+private fun CarrierLogoBadge(result: DetectionResult, imageLoader: ImageLoader) {
     val context = LocalContext.current
     val primaryColor = MaterialTheme.colorScheme.primary
+    val carrier = if (result.lockStatus == LockStatus.LOCKED) result.carrier else XIAOMI_DEFAULT
 
     Box(
         modifier = Modifier
@@ -191,37 +204,58 @@ private fun CarrierLogoBadge(carrier: Carrier, imageLoader: ImageLoader) {
             .border(width = 4.dp, color = primaryColor, shape = CircleShape),
         contentAlignment = Alignment.Center
     ) {
-        if (carrier.logoAssetPath != null) {
-            val uri = "file:///android_asset/${carrier.logoAssetPath}".toUri()
-            AsyncImage(
-                model = ImageRequest.Builder(context)
-                    .data(uri)
-                    .crossfade(true)
-                    .build(),
-                imageLoader = imageLoader,
-                contentDescription = carrier.displayName,
-                contentScale = ContentScale.Fit,
-                modifier = Modifier
-                    .size(110.dp)
-                    .padding(8.dp)
-            )
-        } else if (carrier.code in CARRIER_REGISTRY) {
-            // Known carrier, no logo asset — show first letter in brand colour
-            Text(
-                text = carrier.displayName.first().uppercase(),
-                color = primaryColor,
-                fontSize = 72.sp,
-                fontWeight = FontWeight.Black,
-                fontFamily = FontFamily.SansSerif
-            )
-        } else {
-            // Completely unknown carrier
-            Icon(
-                imageVector = Icons.Rounded.Lock,
-                contentDescription = "Carrier locked",
-                tint = primaryColor,
-                modifier = Modifier.size(72.dp)
-            )
+        when {
+            result.lockStatus == LockStatus.UNKNOWN -> {
+                Icon(
+                    imageVector = Icons.Rounded.QuestionMark,
+                    contentDescription = "Unknown status",
+                    tint = primaryColor,
+                    modifier = Modifier.size(72.dp)
+                )
+            }
+            carrier.logoAssetPath != null -> {
+                val uri = "file:///android_asset/${carrier.logoAssetPath}".toUri()
+                AsyncImage(
+                    model = ImageRequest.Builder(context)
+                        .data(uri)
+                        .crossfade(true)
+                        .build(),
+                    imageLoader = imageLoader,
+                    contentDescription = carrier.displayName,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .size(110.dp)
+                        .padding(8.dp)
+                )
+            }
+            carrier.code in CARRIER_REGISTRY -> {
+                // Known carrier, no logo asset — show first letter in brand colour
+                Text(
+                    text = carrier.displayName.first().uppercase(),
+                    color = primaryColor,
+                    fontSize = 72.sp,
+                    fontWeight = FontWeight.Black,
+                    fontFamily = FontFamily.SansSerif
+                )
+            }
+            result.lockStatus == LockStatus.LOCKED -> {
+                // Locked to something we don't know
+                Icon(
+                    imageVector = Icons.Rounded.Lock,
+                    contentDescription = "Carrier locked",
+                    tint = primaryColor,
+                    modifier = Modifier.size(72.dp)
+                )
+            }
+            else -> {
+                // Unlocked / Xiaomi default
+                Icon(
+                    imageVector = Icons.Rounded.LockOpen,
+                    contentDescription = "Unlocked",
+                    tint = primaryColor,
+                    modifier = Modifier.size(72.dp)
+                )
+            }
         }
     }
 }

@@ -17,6 +17,7 @@ Xiaomi phones often include hidden carrier-specific software (COTA) that control
 - **Property Viewer**: Access the raw values of MIUI system properties for troubleshooting.
 
 <p align="center">
+  <img src="screenshots/unlocked.jpg" alt="Normal Device" height="500">
   <img src="screenshots/telekom-lock.jpg" alt="Locked Device" height="500">
 </p>
 

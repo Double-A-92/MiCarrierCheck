@@ -11,15 +11,22 @@ val TRACKED_PROPERTIES = listOf(
     "persist.sys.lockzone.channel",
 )
 
+/** Represents the lock status of the device. */
+enum class LockStatus {
+    LOCKED,
+    UNLOCKED,
+    UNKNOWN
+}
+
 /**
  * Result of a carrier detection pass.
  *
- * @param isCarrierLocked  True when `ro.miui.carrier.cota` == "true".
+ * @param lockStatus       Status of the carrier lock (LOCKED, UNLOCKED, or UNKNOWN).
  * @param carrier          Matched [Carrier] from the registry, or [XIAOMI_DEFAULT].
  * @param rawProperties    Raw key→value map for the details panel.
  */
 data class DetectionResult(
-    val isCarrierLocked: Boolean,
+    val lockStatus: LockStatus,
     val carrier: Carrier,
     val rawProperties: Map<String, String>,
 )
@@ -28,7 +35,7 @@ data class DetectionResult(
 fun detectCarrier(): DetectionResult {
     val props = TRACKED_PROPERTIES.associateWith { readProperty(it) }
 
-    val isLocked = props["ro.miui.carrier.cota"]?.lowercase() == "true"
+    val cotaActive = props["ro.miui.carrier.cota"]?.lowercase() == "true"
 
     // Resolve the raw code: prefer carrier.name → cota.carrier → lockzone.channel
     val rawCode = props["persist.sys.cota.carrier"]?.takeIf { it.isNotBlank() }
@@ -38,8 +45,14 @@ fun detectCarrier(): DetectionResult {
 
     val carrier = resolveCarrier(rawCode)
 
+    val lockStatus = when {
+        !cotaActive -> LockStatus.UNKNOWN
+        carrier != XIAOMI_DEFAULT -> LockStatus.LOCKED
+        else -> LockStatus.UNLOCKED
+    }
+
     return DetectionResult(
-        isCarrierLocked = isLocked,
+        lockStatus = lockStatus,
         carrier = carrier,
         rawProperties = props,
     )
