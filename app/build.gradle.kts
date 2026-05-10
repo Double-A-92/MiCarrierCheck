@@ -11,8 +11,19 @@ android {
         applicationId = "com.amedeo.micarriercheck"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+
+        // Use the passed property, fallback to "1.0.0" for normal builds
+        versionName = project.findProperty("versionName") as String? ?: "1.0.0"
+
+        // Auto-generate versionCode from versionName (e.g., 0.2 → 200)
+        versionCode = versionName?.split(".")?.map { it.toIntOrNull() ?: 0 }
+            .let { parts ->
+                parts?.let {
+                    (it.getOrElse(0) { 0 }) * 10000 +
+                    (it.getOrElse(1) { 0 }) * 100 +
+                    (it.getOrElse(2) { 0 })
+                }
+            }
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
