@@ -1,0 +1,17 @@
+<svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1572 1429" width="1572" height="1429">
+	<title>Verizon_2024-svg</title>
+	<defs>
+		<linearGradient id="g1" x2="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(312.57,754.171,-197.243,81.749,430.948,537.988)">
+			<stop offset="0" stop-color="#f50a23"/>
+			<stop offset="1" stop-color="#f5ff1e"/>
+		</linearGradient>
+	</defs>
+	<style>
+		.s0 { fill: url(#g1) } 
+		.s1 { fill: #f50a23 } 
+	</style>
+	<g id="g19">
+		<path id="path27" class="s0" d="m0.1 0.8l540.7 1409.9c4.1 10.7 14.4 17.7 25.8 17.7h438.7c-11.4 0-21.7-7-25.8-17.7l-540.7-1409.9z"/>
+		<path id="path29" class="s1" d="m1571.8 0.8l-540.7 1409.9c-4.1 10.7-14.3 17.7-25.8 17.7h-438.7c11.5 0 21.8-7 25.9-17.7l540.6-1409.9z"/>
+	</g>
+</svg>
