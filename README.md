@@ -37,9 +37,10 @@ If you find a carrier code that isn't recognized, you can easily add it to the p
 
 1.  **Find the Code**: Check the "Details" panel in the app to find the 2-letter code in properties like `persist.sys.cota.carrier` (e.g., "VF" for Vodafone).
 2.  **Update the Registry**: Open `Carrier.kt` and add a new entry to the `CARRIER_REGISTRY` list:
+   
     ```kotlin
     Carrier("Carrier Name", "CODE", Color(0xFFHEXCODE), "logos/carrier_logo.svg")
     ```
-3.  **Add the Logo**: Place an SVG or PNG logo for the carrier in the `app/src/main/assets/logos/` directory.
+4.  **Add the Logo**: Place an SVG or PNG logo for the carrier in the `app/src/main/assets/logos/` directory.
 
 
